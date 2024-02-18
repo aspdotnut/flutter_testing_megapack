@@ -48,10 +48,21 @@ class _ForumState extends State<Forum> {
     });
   }
 
+  void _getComments() async {
+
+    var comments = await getComments();
+
+    setState(() {
+      _comments.clear();
+      _comments.addAll(comments);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 
     _getPosts();
+    _getComments();
 
     return Center(
 
@@ -61,7 +72,7 @@ class _ForumState extends State<Forum> {
         child: SingleChildScrollView(
 
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints: const BoxConstraints(maxWidth: 1250),
 
             child: ListView.builder(
               physics: const NeverScrollableScrollPhysics(),
@@ -69,24 +80,58 @@ class _ForumState extends State<Forum> {
               itemCount: _posts.length,
               itemBuilder: (context, index) {
 
-                var id = _posts[index]['id'];
-                var title = _posts[index]['title'];
-                var content = _posts[index]['content'];
-                var memberId = _posts[index]['member_id'];
-                var email = _posts[index]['email'];
+                var postId = _posts[index]['id'];
+                var postTitle = _posts[index]['title'];
+                var postContent = _posts[index]['content'];
+                var postMemberId = _posts[index]['member_id'];
+                var postEmail = _posts[index]['email'];
+                var postCreated = _posts[index]['created_at'];
+                var postIsEdited = _posts[index]['is_edited'];
 
                 return ListTile(
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
+                  title: Column(
                     children: [
-                      Column(
+                      Text(postTitle),
+                      Text('by $postEmail'),
+                      Text(postContent),
+                      Text('$postCreated $postIsEdited'),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1250),
 
-                        children: [
-                          Text(title),
-                          Text('by $email'),
-                          Text(content)
-                        ],
+                        child: ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: _comments.length,
+                          itemBuilder: (context, index) {
+
+                            var commentId = _comments[index]['id'];
+                            var commentContent = _comments[index]['content'];
+                            var commentMemberId = _comments[index]['member_id'];
+                            var commentEmail = _comments[index]['email'];
+                            var commentPostId = _comments[index]['post_id'];
+                            var commentCreated = _comments[index]['created_at'];
+                            var commentIsEdited = _comments[index]['is_edited'];
+
+                            print(_comments);
+
+                            if (commentPostId == postId) {
+                              return ListTile(
+                                title:
+                                Column(
+
+                                  children: [
+                                    Text(commentContent),
+                                    Text('by $commentEmail'),
+                                    Text('$commentCreated $commentIsEdited'),
+                                  ],
+                                ),
+                              );
+                            }
+                            else {
+                              return const SizedBox();
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
