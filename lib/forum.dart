@@ -707,7 +707,12 @@ class _ForumState extends State<Forum> {
                               Text(postContent),
                               const Divider(),
                               Text('by $postMember'),
-                              Text('at $postCreated $postIsEdited'),
+                              Text(
+                                'at $postCreated $postIsEdited',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                ),
+                              ),
                               if (postMemberId == _memberId) ...[
                                 Row(
                                   children: [
@@ -763,7 +768,12 @@ class _ForumState extends State<Forum> {
                                               Text(commentContent),
                                               const Divider(),
                                               Text('by $commentMember'),
-                                              Text('at $commentCreated $commentIsEdited'),
+                                              Text(
+                                                'at $commentCreated $commentIsEdited',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
                                               if (commentMemberId == _memberId) ...[
                                                 Row(
                                                   children: [
