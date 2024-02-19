@@ -20,12 +20,12 @@ class Orb extends Equatable {
   static List<Orb> orbs = [
 
     Orb(
-        id: Uuid().v4(),
+        id: const Uuid().v4(),
         name: 'Red Orb',
         color: '#FF0000'),
 
     Orb(
-        id: Uuid().v4(),
+        id: const Uuid().v4(),
         name: 'Blue Orb',
         color: '#0000FF'),
   ];
