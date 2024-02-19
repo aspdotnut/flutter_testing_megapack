@@ -2,9 +2,9 @@ import 'package:mysql1/mysql1.dart';
 
 import 'dart:async';
 
-Future addMember([List<dynamic>? parameters]) async {
+Future addMember(String name, String hashedPassword) async {
 
-  const query = "INSERT INTO members (email, password) "
+  const query = "INSERT INTO members (name, password) "
       "VALUES (?, ?)";
 
   final conn = await MySqlConnection.connect(ConnectionSettings(
@@ -16,9 +16,13 @@ Future addMember([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [name, hashedPassword]);
 
-    return result;
+    if (result.isNotEmpty || result.affectedRows! > 0) {
+
+      return true;
+    }
+    return false;
   }
   catch (e) {
 
@@ -31,11 +35,11 @@ Future addMember([List<dynamic>? parameters]) async {
   }
 }
 
-Future getMember([List<dynamic>? parameters]) async {
+Future getMember(String name) async {
 
   const query = "SELECT * "
       "FROM members "
-      "WHERE email = ?";
+      "WHERE name = ?";
 
   final conn = await MySqlConnection.connect(ConnectionSettings(
       host: 'localhost',
@@ -46,9 +50,12 @@ Future getMember([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [name]);
+    if (result.isNotEmpty || result.affectedRows! > 0) {
 
-    return result;
+      return true;
+    }
+    return false;
   }
   catch (e) {
 
@@ -61,7 +68,41 @@ Future getMember([List<dynamic>? parameters]) async {
   }
 }
 
-Future addPost([List<dynamic>? parameters]) async {
+Future authMember(String name, String hashedPassword) async {
+
+  const query = "SELECT * "
+      "FROM members "
+      "WHERE name = ? "
+      "AND password = ?";
+
+  final conn = await MySqlConnection.connect(ConnectionSettings(
+      host: 'localhost',
+      port: 3306,
+      user: 'root',
+      db: 'forum'
+  ));
+
+  try {
+
+    var result = await conn.query(query, [name, hashedPassword]);
+    if (result.isNotEmpty || result.affectedRows! > 0) {
+
+      return result.first['id'];
+    }
+    return 0;
+  }
+  catch (e) {
+
+    print(e);
+    return 0;
+  }
+  finally {
+
+    await conn.close();
+  }
+}
+
+Future addPost(int memberId, String title, String content) async {
 
   const query = "INSERT INTO posts (member_id, title, content) "
       "VALUES (?, ?, ?)";
@@ -75,9 +116,13 @@ Future addPost([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [memberId, title, content]);
 
-    return result;
+    if (result.isNotEmpty || result.affectedRows! > 0) {
+
+      return true;
+    }
+    return false;
   }
   catch (e) {
 
@@ -92,9 +137,10 @@ Future addPost([List<dynamic>? parameters]) async {
 
 Future getPosts() async {
 
-  const query = "SELECT posts.*, members.email "
+  const query = "SELECT posts.*, members.name "
       "FROM posts "
-      "JOIN members ON posts.member_id = members.id";
+      "JOIN members ON posts.member_id = members.id "
+      "ORDER BY posts.created_at DESC";
 
   final conn = await MySqlConnection.connect(ConnectionSettings(
       host: 'localhost',
@@ -115,7 +161,7 @@ Future getPosts() async {
         "title": row['title'],
         "content": row['content'],
         "member_id": row['member_id'],
-        "email": row['email'],
+        "name": row['name'],
         "created_at": row['created_at'],
         "is_edited": row['is_edited'] == 1 ? "(edited)" : "",
       };
@@ -126,7 +172,7 @@ Future getPosts() async {
   catch (e) {
 
     print(e);
-    return false;
+    return [];
   }
   finally {
 
@@ -134,10 +180,10 @@ Future getPosts() async {
   }
 }
 
-Future updatePost([List<dynamic>? parameters]) async {
+Future getPost(int id) async {
 
-  const query = "UPDATE posts "
-      "SET title = ?, content = ? "
+  const query = "SELECT * "
+      "FROM posts "
       "WHERE id = ?";
 
   final conn = await MySqlConnection.connect(ConnectionSettings(
@@ -149,7 +195,46 @@ Future updatePost([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [id]);
+    List<Map<String, dynamic>> posts = [];
+
+    for (var row in result) {
+
+      Map<String, dynamic> post = {
+        "title": row['title'],
+        "content": row['content'],
+      };
+      posts.add(post);
+    }
+    return posts;
+  }
+  catch (e) {
+
+    print(e);
+    return [];
+  }
+  finally {
+
+    await conn.close();
+  }
+}
+
+Future updatePost(String title, String content, int id) async {
+
+  const query = "UPDATE posts "
+      "SET title = ?, content = ?, is_edited = 1 "
+      "WHERE id = ?";
+
+  final conn = await MySqlConnection.connect(ConnectionSettings(
+      host: 'localhost',
+      port: 3306,
+      user: 'root',
+      db: 'forum'
+  ));
+
+  try {
+
+    var result = await conn.query(query, [title, content, id]);
 
     if (result.isNotEmpty || result.affectedRows! > 0) {
 
@@ -168,7 +253,7 @@ Future updatePost([List<dynamic>? parameters]) async {
   }
 }
 
-Future deletePost([List<dynamic>? parameters]) async {
+Future deletePost(int id) async {
 
   const query = "DELETE FROM posts "
       "WHERE id = ?";
@@ -182,7 +267,7 @@ Future deletePost([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [id]);
 
     if (result.isNotEmpty || result.affectedRows! > 0) {
 
@@ -201,7 +286,7 @@ Future deletePost([List<dynamic>? parameters]) async {
   }
 }
 
-Future addComment([List<dynamic>? parameters]) async {
+Future addComment(int memberId, int postId, String content) async {
 
   const query = "INSERT INTO comments (member_id, post_id, content) "
       "VALUES (?, ?, ?)";
@@ -215,9 +300,13 @@ Future addComment([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [memberId, postId, content]);
 
-    return result;
+    if (result.isNotEmpty || result.affectedRows! > 0) {
+
+      return true;
+    }
+    return false;
   }
   catch (e) {
 
@@ -232,9 +321,10 @@ Future addComment([List<dynamic>? parameters]) async {
 
 Future getComments() async {
 
-  const query = "SELECT comments.*, members.email "
-  "FROM comments "
-  "JOIN members ON comments.member_id = members.id";
+  const query = "SELECT comments.*, members.name "
+      "FROM comments "
+      "JOIN members ON comments.member_id = members.id "
+      "ORDER BY comments.created_at ASC";
 
   final conn = await MySqlConnection.connect(ConnectionSettings(
       host: 'localhost',
@@ -254,7 +344,7 @@ Future getComments() async {
         "id": row['id'],
         "content": row['content'],
         "member_id": row['member_id'],
-        "email": row['email'],
+        "name": row['name'],
         "post_id": row['post_id'],
         "created_at": row['created_at'],
         "is_edited": row['is_edited'] == 1 ? "(edited)" : "",
@@ -266,7 +356,7 @@ Future getComments() async {
   catch (e) {
 
     print(e);
-    return false;
+    return [];
   }
   finally {
 
@@ -274,9 +364,10 @@ Future getComments() async {
   }
 }
 
-Future updateComment([List<dynamic>? parameters]) async {
+Future getComment(int id) async {
 
-  const query = "UPDATE comments SET content = ? "
+  const query = "SELECT * "
+      "FROM comments "
       "WHERE id = ?";
 
   final conn = await MySqlConnection.connect(ConnectionSettings(
@@ -288,7 +379,45 @@ Future updateComment([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [id]);
+    List<Map<String, dynamic>> comments = [];
+
+    for (var row in result) {
+
+      Map<String, dynamic> comment = {
+        "content": row['content'],
+      };
+      comments.add(comment);
+    }
+    return comments;
+  }
+  catch (e) {
+
+    print(e);
+    return [];
+  }
+  finally {
+
+    await conn.close();
+  }
+}
+
+Future updateComment(String content, int commentId) async {
+
+  const query = "UPDATE comments "
+      "SET content = ?, is_edited = 1 "
+      "WHERE id = ?";
+
+  final conn = await MySqlConnection.connect(ConnectionSettings(
+      host: 'localhost',
+      port: 3306,
+      user: 'root',
+      db: 'forum'
+  ));
+
+  try {
+
+    var result = await conn.query(query, [content, commentId]);
 
     if (result.isNotEmpty || result.affectedRows! > 0) {
 
@@ -307,7 +436,7 @@ Future updateComment([List<dynamic>? parameters]) async {
   }
 }
 
-Future deleteComment([List<dynamic>? parameters]) async {
+Future deleteComment(int id) async {
 
   const query = "DELETE FROM comments "
       "WHERE id = ?";
@@ -321,7 +450,7 @@ Future deleteComment([List<dynamic>? parameters]) async {
 
   try {
 
-    var result = parameters == null ? await conn.query(query) : await conn.query(query, parameters);
+    var result = await conn.query(query, [id]);
 
     if (result.isNotEmpty || result.affectedRows! > 0) {
 
