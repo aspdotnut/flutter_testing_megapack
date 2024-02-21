@@ -9,7 +9,7 @@ Future getPassword(String passwrd) async {
     print(passwrd);
     final data = jsonEncode(passwrd);
     final response = await dio.post(
-      'http://localhost:5208/password', data: data,);
+      'http://localhost:5181/password', data: data,);
     print(response.data);
 
     return true;
@@ -24,7 +24,7 @@ Future addPassword(String password) async {
 
   final dio = Dio();
   final data = jsonEncode(password);
-  final response = await dio.post('http://localhost:5208/password/add', data: data,);
+  final response = await dio.post('http://localhost:5181/password/add', data: data,);
   if (response.statusCode == 200) {
 
     return true;
