@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 
 import 'dart:math';
 
+import 'dio/forum_dio.dart';
 import 'db/forum_db.dart';
 import 'hash.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'db/password_db.dart';
+import 'dio/password_dio.dart';
 import 'hash.dart';
 
 class PasswordKitchen extends StatefulWidget {
@@ -125,7 +125,7 @@ class _PasswordKitchenState extends State<PasswordKitchen> {
 
     String encryptedPassword = hashPassword(ingredientPassword);
 
-    return await dbInsert([encryptedPassword]);
+    return await addPassword(encryptedPassword);
   }
 
 
@@ -138,7 +138,7 @@ class _PasswordKitchenState extends State<PasswordKitchen> {
 
     String encryptedPassword = hashPassword(password);
 
-    return await dbSelect([encryptedPassword]);
+    return await getPassword(encryptedPassword);
   }
 
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'db/todo_db.dart';
+import 'dio/todo_dio.dart';
 
 class TodoList extends StatefulWidget {
 
@@ -13,13 +13,13 @@ class TodoList extends StatefulWidget {
 class _TodoListState extends State<TodoList> {
 
   final TextEditingController _textController = TextEditingController();
-  final List<Map<String, dynamic>> _tasks = [];
+  final List<dynamic> _tasks = [];
 
   void _onTextSubmitted() async {
 
     if (_textController.text.isNotEmpty) {
 
-      await dbInsert([_textController.text]);
+      await addTodoItem(_textController.text);
 
       _textController.clear();
     }
@@ -27,7 +27,7 @@ class _TodoListState extends State<TodoList> {
 
   void _getTasks() async {
 
-    var tasks = await dbSelect();
+    var tasks = await getTodoItems();
 
     setState(() {
       _tasks.clear();
@@ -35,16 +35,14 @@ class _TodoListState extends State<TodoList> {
     });
   }
 
-  Future<bool> _onCheckboxChanged(int id, int value) async {
+  void _onCheckboxChanged(int id) async {
 
-    await dbUpdate([value, id]);
-
-    return value == 1;
+    await updateTodoItem(id);
   }
 
   void _onRemove(int id) async {
 
-    await dbDelete([id]);
+    await deleteTodoItem(id);
   }
 
   @override
@@ -83,8 +81,8 @@ class _TodoListState extends State<TodoList> {
                         itemBuilder: (context, index) {
 
                           var id = _tasks[index]['id'];
-                          var task = _tasks[index]['task'] ?? 'No task';
-                          var value = _tasks[index]['done'];
+                          var task = _tasks[index]['name'];
+                          var value = _tasks[index]['isDone'];
 
                           return ListTile(
                             title: Row(
@@ -95,18 +93,9 @@ class _TodoListState extends State<TodoList> {
 
                                   children: [
                                     Checkbox(
-                                      value: value == 1,
+                                      value: value,
                                       onChanged: (bool? newValue) {
-
-                                        if (newValue != null) {
-
-                                          _onCheckboxChanged(id, newValue ? 1 : 0).then((finalValue) {
-
-                                            setState(() {
-                                              value = finalValue ? 1 : 0;
-                                            });
-                                          });
-                                        }
+                                        _onCheckboxChanged(id);
                                       },
                                     ),
 
@@ -187,8 +176,8 @@ class _TodoListState extends State<TodoList> {
                               itemBuilder: (context, index) {
 
                                 var id = _tasks[index]['id'];
-                                var task = _tasks[index]['task'] ?? 'No task';
-                                var value = _tasks[index]['done'];
+                                var task = _tasks[index]['name'];
+                                var value = _tasks[index]['isDone'];
 
                                 return ListTile(
                                   title: Row(
@@ -199,18 +188,9 @@ class _TodoListState extends State<TodoList> {
 
                                         children: [
                                           Checkbox(
-                                            value: value == 1,
+                                            value: value,
                                             onChanged: (bool? newValue) {
-
-                                              if (newValue != null) {
-
-                                                _onCheckboxChanged(id, newValue ? 1 : 0).then((finalValue) {
-
-                                                  setState(() {
-                                                    value = finalValue ? 1 : 0;
-                                                  });
-                                                });
-                                              }
+                                              _onCheckboxChanged(id);
                                             },
                                           ),
 
